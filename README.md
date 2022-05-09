@@ -14,8 +14,8 @@ For scaling experiments, we need to increase the pixel number of input data. So 
 The Experiment results was shown in the report: https://docs.google.com/document/d/1t7FT0fo983CncVQVrAsNiGYo18_BmD2c5cgNx40--iA/edit?usp=sharing (Use your UC Berkeley account to open it)
 
 # Instructions:
-## serial and openmp
-### 1. Configuration
+## [1] serial and openmp
+### 1.1 Configuration
 Using your account connect to Bridges2:
 ```
 ssh -l {your_name} -i ~/.ssh/nersc cori.nersc.gov
@@ -33,7 +33,7 @@ cd CS267-Final-Edge-Detection
 cd edge_detection
 ```
 
-### 2. Build
+### 1.2 Build
 for serial:
 ```
 make clean
@@ -46,7 +46,7 @@ for openmp
 make clean
 make openmp
 ```
-### 3. Run
+### 1.3 Run
 ./{exe} {input image path} {output image path}
 
 
@@ -61,8 +61,8 @@ export OMP_PROC_BIND=spread
 srun -n 1 ./openmp ../images/Gate_16.png output_16.png
 ```
 
-## CUDA
-### 1. Configuration
+## [2] CUDA
+### 1.1 Configuration
 Using your account connect to Bridges2:
 ```
 ssh -p 2222 {your_name}@bridges2.psc.xsede.org
@@ -80,18 +80,16 @@ module load cuda
 module load cmake
 ```
 
-### 2. Build
+### 1.2 Build
 for CUDA
 ```
 make clean
 make cuda
 ```
-### 3. Run
+### 1.3 Run
 ```
 ./cuda ../images/Gate_16.png output_16.png
 ```
-# Results:
-
 
 
 # Reference:
