@@ -5,7 +5,7 @@
 #include <sys/time.h>
 #include <omp.h>
 
-#define NUM_THREADS 64
+#define NUM_THREADS 68
 
 int decode_image(const char *srcFileName, uint32_t *input_image_width, uint32_t *input_image_height, unsigned char **input_image_data)
 {
