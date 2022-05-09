@@ -3,6 +3,15 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <sys/time.h>
+#include <omp.h>
+int decode_image(const char *srcFileName, uint32_t *input_image_width, uint32_t *input_image_height, unsigned char **input_image_data);
+int conv3(uint32_t image_width, uint32_t image_height, unsigned char *image_data, signed char kernel[3][3], int16_t *mat_data);
+int encode_image(const char *destFileName, uint32_t width, uint32_t height, unsigned char *output_image_data);
+int edge_detection(uint32_t input_image_width, uint32_t input_image_height, unsigned char *input_image_data, unsigned char *output_image_data);
+int RGBA_to_greyScale(uint32_t input_image_width, uint32_t input_image_height, unsigned char *input_image_data, unsigned char *grey_input_image_data);
+int greyScale_to_RGBA(uint32_t image_width, uint32_t image_height, unsigned char *grey_output_image_data,unsigned char *output_image_data);
+int post_processing(uint32_t image_width, uint32_t image_height, int16_t *gradX_mat_data, int16_t *gradY_mat_data, unsigned char *grey_output_image_data);
+
 int main(int argc, const char *argv[])
 {
 
@@ -23,7 +32,6 @@ int main(int argc, const char *argv[])
 	struct timeval start, stop;
 	double secs = 0;
 	gettimeofday(&start, NULL);
-
 	edge_detection(width, height, input_image_data, output_image_data);
 	gettimeofday(&stop, NULL);
 	secs = (double)(stop.tv_usec - start.tv_usec) / 1000000 + (double)(stop.tv_sec - start.tv_sec);
@@ -105,8 +113,7 @@ int conv3(uint32_t image_width, uint32_t image_height, unsigned char *image_data
 }
 
 /* matrix --> grayscale image (0-255) */
-int post_processing(uint32_t image_width, uint32_t image_height, int16_t *gradX_mat_data, int16_t *gradY_mat_data,
-					unsigned char *grey_output_image_data)
+int post_processing(uint32_t image_width, uint32_t image_height, int16_t *gradX_mat_data, int16_t *gradY_mat_data, unsigned char *grey_output_image_data)
 {
 	double start_post = omp_get_wtime();
 	int16_t *temp_mat = calloc(image_width * image_height, sizeof(int16_t));
@@ -135,8 +142,7 @@ int post_processing(uint32_t image_width, uint32_t image_height, int16_t *gradX_
 	return 0;
 }
 
-int greyScale_to_RGBA(uint32_t image_width, uint32_t image_height, unsigned char *grey_output_image_data,
-					  unsigned char *output_image_data)
+int greyScale_to_RGBA(uint32_t image_width, uint32_t image_height, unsigned char *grey_output_image_data,unsigned char *output_image_data)
 {
 	for (uint32_t i = 0; i < image_width * image_height; i++)
 	{
@@ -149,8 +155,7 @@ int greyScale_to_RGBA(uint32_t image_width, uint32_t image_height, unsigned char
 	return 0;
 }
 
-int RGBA_to_greyScale(uint32_t input_image_width, uint32_t input_image_height, unsigned char *input_image_data,
-					  unsigned char *grey_input_image_data)
+int RGBA_to_greyScale(uint32_t input_image_width, uint32_t input_image_height, unsigned char *input_image_data, unsigned char *grey_input_image_data)
 {
 	uint32_t R, G, B, greyVal;
 	for (uint32_t i = 0; i < input_image_width * input_image_height; i++)
@@ -167,8 +172,7 @@ int RGBA_to_greyScale(uint32_t input_image_width, uint32_t input_image_height, u
 	return 0;
 }
 
-int edge_detection(uint32_t input_image_width, uint32_t input_image_height, unsigned char *input_image_data,
-				   unsigned char *output_image_data)
+int edge_detection(uint32_t input_image_width, uint32_t input_image_height, unsigned char *input_image_data, unsigned char *output_image_data)
 {
 	// allocation:
 	// define grey image data structure
@@ -207,8 +211,7 @@ int edge_detection(uint32_t input_image_width, uint32_t input_image_height, unsi
 	return 0;
 }
 
-int decode_image(const char *srcFileName, uint32_t *input_image_width, uint32_t *input_image_height,
-				 unsigned char **input_image_data)
+int decode_image(const char *srcFileName, uint32_t *input_image_width, uint32_t *input_image_height, unsigned char **input_image_data)
 {
 	unsigned int res;
 	lodepng_decode32_file(input_image_data, input_image_width, input_image_height, srcFileName);
