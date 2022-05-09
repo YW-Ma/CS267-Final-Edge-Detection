@@ -4,11 +4,6 @@ Author:
 - Jingjing Wei,
 - Yaowei Ma
 
-Reference:
-- Image Decode / Encode library: https://github.com/lvandeve/lodepng
-- CUDA max reduction: https://github.com/Ricordel/parallel-sobel
-
-
 # Instructions:
 ## serial and openmp
 ### 1. Configuration
@@ -54,3 +49,7 @@ make cuda
 ### 3. Run
 ```
 ```
+
+# Reference:
+- Image Decode / Encode library: https://github.com/lvandeve/lodepng
+- CUDA max reduction: https://github.com/Ricordel/parallel-sobel
