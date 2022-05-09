@@ -49,6 +49,8 @@ make cuda
 ### 3. Run
 ```
 ```
+# Results:
+
 
 # Reference:
 - Image Decode / Encode library: https://github.com/lvandeve/lodepng
