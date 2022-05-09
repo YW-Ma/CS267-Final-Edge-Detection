@@ -1,8 +1,15 @@
 # Edge Detection
-Edge Detection
+Author:
+    Guanyue Bian,
+    Jingjing Wei,
+    Yaowei Ma
 
-- v2 is the updated one now. (seq only)
-- reference is the reference codes (seq, omp, cuda)
+Reference:
+    Image Read / Write library:
+    Image Decode / Encode:
+    Algorithm to Get Maximum Number in CUDA:
+    
+
 
 # Please put .png images under images folder
 # Build:
