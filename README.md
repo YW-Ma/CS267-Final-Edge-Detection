@@ -1,8 +1,8 @@
 # Edge Detection
 Author:
-- Guanyue Bian,
-- Jingjing Wei,
-- Yaowei Ma
+- Guanyue Bian (guanyue_bian@berkeley.edu)
+- Jingjing Wei (jingjingwei@berkeley.edu)
+- Yaowei Ma    (yaowei_ma@berkeley.edu)
 
 # Instructions:
 ## serial and openmp
