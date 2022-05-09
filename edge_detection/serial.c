@@ -14,6 +14,10 @@ int post_processing(uint32_t image_width, uint32_t image_height, int16_t *gradX_
 
 int main(int argc, const char *argv[])
 {
+	if (argc < 4) {
+		printf("Please specify the input and output path\n");
+		return 1;
+	}
 
 	const char *inFileName = argv[1];
 	const char *outFileName = argv[2];
