@@ -143,7 +143,7 @@ int edge_detection(uint32_t input_image_width, uint32_t input_image_height, unsi
 	int16_t *gradY_mat_data = calloc(input_image_width * input_image_height, sizeof(int16_t));
 	// kernel
 	signed char sobel_kernel_x[3][3] = {{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}};
-	signed char sobel_kernel_y[3][3] = {{-1,-2,-1}, {0,0,0}, {1,2,1}}
+	signed char sobel_kernel_y[3][3] = {{-1,-2,-1}, {0,0,0}, {1,2,1}};
 	double end_allo = omp_get_wtime();
 	printf("\nAlloc: %lf sec\n", end_allo - start_allo);
 	// RGBA --> Gray
