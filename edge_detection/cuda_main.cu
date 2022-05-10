@@ -3,7 +3,7 @@
 #include <time.h>
 #include <iostream>
 #include <math.h>
-#include "cuda_dataloader.cpp"
+#include <string>
 #include "lodepng.h"
 
 #define GRIDVAL 20.0 
