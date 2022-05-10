@@ -87,7 +87,12 @@ make cuda
 ```
 ### 1.3 Run
 ```
-./cuda ../images/Gate_16.png output_16.png
+./cuda ../images/Gate.png output.png
+
+if you want to see where the time goes, please use:
+**nvprof** ./cuda ../images/Gate.png output.png
+
+But the manual timer only count the running time without the CUDA memcpy and malloc time, so as to have the same  matric similar to serial and openmp.
 ```
 
 
