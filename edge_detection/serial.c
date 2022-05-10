@@ -211,9 +211,7 @@ int edge_detection(uint32_t input_image_width, uint32_t input_image_height, unsi
 
 int decode_image(const char *srcFileName, uint32_t *input_image_width, uint32_t *input_image_height, unsigned char **input_image_data)
 {
-	unsigned int res;
 	lodepng_decode32_file(input_image_data, input_image_width, input_image_height, srcFileName);
-
 	return 0;
 }
 
