@@ -77,7 +77,6 @@ git clone https://github.com/YW-Ma/CS267-Final-Edge-Detection.git
 cd CS267-Final-Edge-Detection
 cd edge_detection
 module load cuda
-module load cmake
 ```
 
 ### 1.2 Build
