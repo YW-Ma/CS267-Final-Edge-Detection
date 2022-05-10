@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <sys/time.h>
-#include <omp.h>
+#include <omp.h> // Use omp.h as a timer in serial code, so as to make sure the timer is similar with openmp version
 int decode_image(const char *srcFileName, uint32_t *input_image_width, uint32_t *input_image_height, unsigned char **input_image_data);
 int conv3(uint32_t image_width, uint32_t image_height, unsigned char *image_data, signed char kernel[3][3], int16_t *mat_data);
 int encode_image(const char *destFileName, uint32_t width, uint32_t height, unsigned char *output_image_data);
