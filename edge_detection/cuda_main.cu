@@ -154,7 +154,7 @@ int main(int argc, char*argv[]) {
     if ( cudaerror != cudaSuccess ) fprintf( stderr, "Cuda failed to synchronize: %s\n", cudaGetErrorName( cudaerror ) ); // if error, output error
     
 	// 6. Grayscale Stretching
-	// 6.1 get max
+	// 6.1 get max (parallel in CUDA but serial in openmp)
     int *maxGradsDevice = NULL;
     cudaMalloc((void **)&maxGradsDevice, width * height * sizeof(int));
     cudaMemcpy(maxGradsDevice, gpu_sobel, width * height * sizeof(int), cudaMemcpyDeviceToDevice);
