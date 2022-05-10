@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <sys/time.h>
 #include <omp.h>
+#include "edge_detection.h"
 
 #define NUM_THREADS 68
 

@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <sys/time.h>
 #include <omp.h> // Use omp.h as a timer in serial code, so as to make sure the timer is similar with openmp version
+#include "edge_detection.h"
 
 int main(int argc, const char *argv[])
 {

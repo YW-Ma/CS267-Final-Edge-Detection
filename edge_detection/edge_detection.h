@@ -1,6 +1,3 @@
-#ifndef __EDGE_DETECTION_H__
-#define __EDGE_DETECTION_H__
-
 #include <stdio.h>
 #include <stdint.h>
 
@@ -11,5 +8,3 @@ int conv3(uint32_t image_width, uint32_t image_height, unsigned char *image_data
 int RGBA_to_greyScale(uint32_t input_image_width, uint32_t input_image_height, unsigned char *input_image_data, unsigned char *grey_input_image_data);
 int greyScale_to_RGBA(uint32_t image_width, uint32_t image_height, unsigned char *grey_output_image_data,unsigned char *output_image_data);
 int post_processing(uint32_t image_width, uint32_t image_height, int16_t *gradX_mat_data, int16_t *gradY_mat_data, unsigned char *grey_output_image_data);
-
-#endif
