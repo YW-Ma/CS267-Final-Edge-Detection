@@ -3,9 +3,10 @@
 #include <time.h>
 #include <iostream>
 #include <math.h>
-#include <string>
+#include "cuda_dataloader.cpp"
 #include "lodepng.h"
 
+#define GRIDVAL 20.0 
 typedef unsigned char byte;
 struct pixel {
     unsigned char R;
@@ -29,7 +30,7 @@ static inline uint32_t getNextPowerOf2(uint32_t n) {
     }
 }
 
-__global__ void edge_detection(const byte* orig, int* cpu, const unsigned int width, const unsigned int height) {
+__global__ void sobel_gpu(const byte* orig, int* cpu, const unsigned int width, const unsigned int height) {
     int x = threadIdx.x + blockIdx.x * blockDim.x;
     int y = threadIdx.y + blockIdx.y * blockDim.y;
     float dx, dy;
@@ -39,7 +40,7 @@ __global__ void edge_detection(const byte* orig, int* cpu, const unsigned int wi
         dy = (-1* orig[(y-1)*width + (x-1)]) + (-2*orig[(y-1)*width+x]) + (-1*orig[(y-1)*width+(x+1)]) +
              (    orig[(y+1)*width + (x-1)]) + ( 2*orig[(y+1)*width+x]) + (   orig[(y+1)*width+(x+1)]);
         cpu[y*width + x] = sqrt( (dx*dx) + (dy*dy) );
-  		// Modified dy
+  // 我修改了一下这里dy的算法，改成和serial、omp一致了。
     }
 }
 
@@ -107,16 +108,19 @@ __global__ void normalize_gpu(int* max, int* edge, struct pixel* output, const u
     uint32_t pxNum = y * width + x + basePx;
     int maxGrad = max[0];
 
-    int grayVal = int(float(edge[pxNum]) / maxGrad * 255);
-    output[pxNum].R = grayVal;
-    output[pxNum].G = grayVal;
-    output[pxNum].B = grayVal;
+    int greyVal = int(float(edge[pxNum]) / maxGrad * 255);
+    output[pxNum].R = greyVal;
+    output[pxNum].G = greyVal;
+    output[pxNum].B = greyVal;
     output[pxNum].A = 255;
 }
 
 int main(int argc, char*argv[]) {
 	cudaDeviceProp devProp;
 	cudaGetDeviceProperties(&devProp, 0);
+	int cores = devProp.multiProcessorCount;
+    printf("GPU: %s, CUDA %d.%d, %zd Mbytes global memory, %d CUDA cores\n",
+    devProp.name, devProp.major, devProp.minor, devProp.totalGlobalMem / 1048576, cores);
 	// 1. Decoding (CPU)
 	unsigned int width, height;
     byte* input;
@@ -138,23 +142,20 @@ int main(int argc, char*argv[]) {
     cudaMalloc((void **)&gpu_sobel, (width * height) * sizeof(int));
     cudaMemset(gpu_sobel, 0, (width * height) * sizeof(int));
    
-    // 3. Setup CUDA property, Grid = 20
-    dim3 threadsPerBlock(20, 20, 1);
-    dim3 numBlocks(ceil(width/20), ceil(height/20), 1);
-	printf("threadsPerBlock = 400\n");
+    // 3. Setup CUDA property
+    dim3 threadsPerBlock(GRIDVAL, GRIDVAL, 1);
+    dim3 numBlocks(ceil(width/GRIDVAL), ceil(height/GRIDVAL), 1);
 
-    auto start_time = std::chrono::system_clock::now();
+    // Timing start
+    auto c = std::chrono::system_clock::now();
 	// 4. RGBA --> Grayscale
 	rgba_to_grayscale<<<numBlocks, threadsPerBlock>>>(gpu_rgba, gpu_orig, width, height);
-	std::chrono::duration<double> rgba2gray = std::chrono::system_clock::now() - start_time;
-	printf("Finish RGBA->Grayscale in: %fms\n", 1000 * rgba2gray.count());
-	// 5. sobel edge detection.
-    edge_detection<<<numBlocks, threadsPerBlock>>>(gpu_orig, gpu_sobel, width, height);
-    cudaError_t cudaerror = cudaDeviceSynchronize(); // waits for completion, returns error code
-    if ( cudaerror != cudaSuccess ) fprintf( stderr, "Cuda failed to synchronize: %s\n", cudaGetErrorName( cudaerror ) ); // if error, output error
-    
+	// 5. sobel
+    sobel_gpu<<<numBlocks, threadsPerBlock>>>(gpu_orig, gpu_sobel, width, height);
+    cudaDeviceSynchronize();
+
 	// 6. Grayscale Stretching
-	// 6.1 get max (parallel in CUDA but serial in openmp)
+	// 6.1 get max --> reference the max_reduction. Please see the readme reference section.
     int *maxGradsDevice = NULL;
     cudaMalloc((void **)&maxGradsDevice, width * height * sizeof(int));
     cudaMemcpy(maxGradsDevice, gpu_sobel, width * height * sizeof(int), cudaMemcpyDeviceToDevice);
@@ -165,8 +166,6 @@ int main(int argc, char*argv[]) {
     while (remainingElems > 1) {
         uint32_t threadsPerBlock = min(remainingElems, maxThreadsPerBlock);
         threadsPerBlock = getNextPowerOf2(threadsPerBlock);
-        /* Don't allocate more blocks than possible. If there are too many pixels,
-            some blocks will handle several pixels (handled in the kernel). */
         uint32_t nBlocks = min(remainingElems / threadsPerBlock + (remainingElems % threadsPerBlock == 0 ? 0 : 1), maxConcurrentBlocks);
         uint32_t nThreads = threadsPerBlock * nBlocks;
         uint32_t nPxPerThread = remainingElems / nThreads + (height * width % nThreads == 0 ? 0 : 1);
@@ -183,7 +182,6 @@ int main(int argc, char*argv[]) {
     cudaMalloc((void **) &outNormalizedDevice, width * height * sizeof(struct pixel));
     for (uint32_t basePx = 0; basePx < height * width; basePx += maxConcurrentThreads) {
 
-        /* Don't use more blocks than necessary */
         uint32_t runningThreads = min(height * width - basePx, maxConcurrentThreads);
         uint32_t nBlocks = runningThreads / maxThreadsPerBlock +
                             (runningThreads % maxThreadsPerBlock == 0 ? 0 : 1);
@@ -192,13 +190,14 @@ int main(int argc, char*argv[]) {
         normalize_gpu <<< nBlocks, maxThreadsPerBlock >>>
             (maxGradsDevice, gpu_sobel, outNormalizedDevice, width, height, basePx);
     }
-    std::chrono::duration<double> edge_detection_all = std::chrono::system_clock::now() - start_time;
+	// Timing stop
+    std::chrono::duration<double> time_gpu = std::chrono::system_clock::now() - c;
 
 	// 8. Copy back to CPU and encode to .PNG file.
     struct pixel *output_image_data = (struct pixel*)calloc(width * height, sizeof(struct pixel));
     cudaMemcpy(output_image_data, outNormalizedDevice, width * height * sizeof(struct pixel), cudaMemcpyDeviceToHost);
-    printf("\n Input file %s, width: %d, height: %d \n", argv[1], width, height);
-    printf("Finish Edge Detection in = %f msec\n", 1000 * edge_detection_all.count());
+    printf("\nProcessing %s: %d rows x %d columns\n", argv[1], height, width);
+    printf("CUDA execution time   = %*.1f msec\n", 5, 1000*time_gpu.count());
     unsigned char *output_image = (unsigned char*)calloc(width * height * 4, sizeof(unsigned char));
     for(int i = 0; i < width * height; i++){
         output_image[i * 4] = output_image_data[i].R;
