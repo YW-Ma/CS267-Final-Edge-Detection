@@ -40,40 +40,6 @@ int main(int argc, const char *argv[])
 	return 0;
 }
 
-static inline int initKernelX(signed char kernelX[3][3])
-{
-	kernelX[0][0] = -1;
-	kernelX[0][1] = 0;
-	kernelX[0][2] = 1;
-
-	kernelX[1][0] = -2;
-	kernelX[1][1] = 0;
-	kernelX[1][2] = 2;
-
-	kernelX[2][0] = -1;
-	kernelX[2][1] = 0;
-	kernelX[2][2] = 1;
-
-	return 0;
-}
-
-static inline int initKernelY(signed char kernelY[3][3])
-{
-	kernelY[0][0] = -1;
-	kernelY[0][1] = -2;
-	kernelY[0][2] = -1;
-
-	kernelY[1][0] = 0;
-	kernelY[1][1] = 0;
-	kernelY[1][2] = 0;
-
-	kernelY[2][0] = 1;
-	kernelY[2][1] = 2;
-	kernelY[2][2] = 1;
-
-	return 0;
-}
-
 int conv3(uint32_t image_width, uint32_t image_height, unsigned char *image_data, signed char kernel[3][3], int16_t *mat_data)
 {
 	for (uint32_t row = 1; row < image_height - 1; row++)
@@ -111,13 +77,13 @@ int conv3(uint32_t image_width, uint32_t image_height, unsigned char *image_data
 }
 
 /* matrix --> grayscale image (0-255) */
-int post_processing(uint32_t image_width, uint32_t image_height, int16_t *gradX_mat_data, int16_t *gradY_mat_data, unsigned char *grey_output_image_data)
+int post_processing(uint32_t image_width, uint32_t image_height, int16_t *grad_x_mat_data, int16_t *grad_y_mat_data, unsigned char *gray_output_image_data)
 {
 	double start_post = omp_get_wtime();
 	int16_t *temp_mat = calloc(image_width * image_height, sizeof(int16_t));
 	for (uint32_t i = 0; i < image_width * image_height; i++)
 	{
-		temp_mat[i] = sqrt(gradX_mat_data[i] * gradX_mat_data[i] + gradY_mat_data[i] * gradY_mat_data[i]);
+		temp_mat[i] = sqrt(grad_x_mat_data[i] * grad_x_mat_data[i] + grad_y_mat_data[i] * grad_y_mat_data[i]);
 	}
 	// get the max value:
 	double start_serial = omp_get_wtime();
@@ -133,38 +99,38 @@ int post_processing(uint32_t image_width, uint32_t image_height, int16_t *gradX_
 	// grayscale stretch
 	for (uint32_t i = 0; i < image_width * image_height; i++)
 	{
-		grey_output_image_data[i] = (unsigned char)((temp_mat[i] * 255) / max);
+		gray_output_image_data[i] = (unsigned char)((temp_mat[i] * 255) / max);
 	}
 	double end_post = omp_get_wtime();
 	printf("Post_Processing: %f sec, including serial find max: %f sec\n", end_post - start_post, end_serial - start_serial);
 	return 0;
 }
 
-int greyScale_to_RGBA(uint32_t image_width, uint32_t image_height, unsigned char *grey_output_image_data,unsigned char *output_image_data)
+int grayscale_to_RGBA(uint32_t image_width, uint32_t image_height, unsigned char *gray_output_image_data,unsigned char *output_image_data)
 {
 	for (uint32_t i = 0; i < image_width * image_height; i++)
 	{
-		uint32_t greyVal = grey_output_image_data[i];
-		output_image_data[4 * i] = greyVal;
-		output_image_data[4 * i + 1] = greyVal;
-		output_image_data[4 * i + 2] = greyVal;
+		uint32_t grayVal = gray_output_image_data[i];
+		output_image_data[4 * i] = grayVal;
+		output_image_data[4 * i + 1] = grayVal;
+		output_image_data[4 * i + 2] = grayVal;
 		output_image_data[4 * i + 3] = 255; /* fully opaque */
 	}
 	return 0;
 }
 
-int RGBA_to_greyScale(uint32_t input_image_width, uint32_t input_image_height, unsigned char *input_image_data, unsigned char *grey_input_image_data)
+int RGBA_to_grayscale(uint32_t input_image_width, uint32_t input_image_height, unsigned char *input_image_data, unsigned char *gray_input_image_data)
 {
-	uint32_t R, G, B, greyVal;
+	uint32_t R, G, B, grayVal;
 	for (uint32_t i = 0; i < input_image_width * input_image_height; i++)
 	{
 		// printf("before load\n");
 		R = input_image_data[4 * i];
 		G = input_image_data[4 * i + 1];
 		B = input_image_data[4 * i + 2];
-		greyVal = (R + G + B) / 3;
+		grayVal = (R + G + B) / 3;
 		// printf("after load, %d\n", i);
-		grey_input_image_data[i] = (unsigned char)greyVal;
+		gray_input_image_data[i] = (unsigned char)grayVal;
 	}
 
 	return 0;
@@ -173,37 +139,35 @@ int RGBA_to_greyScale(uint32_t input_image_width, uint32_t input_image_height, u
 int edge_detection(uint32_t input_image_width, uint32_t input_image_height, unsigned char *input_image_data, unsigned char *output_image_data)
 {
 	// allocation:
-	// define grey image data structure
+	// define gray image data structure
 	double start_allo = omp_get_wtime();
-	unsigned char *grey_input_image_data = calloc(input_image_width * input_image_height, sizeof(unsigned char));
-	unsigned char *grey_output_image_data = calloc(input_image_width * input_image_height, sizeof(unsigned char));
+	unsigned char *gray_input_image_data = calloc(input_image_width * input_image_height, sizeof(unsigned char));
+	unsigned char *gray_output_image_data = calloc(input_image_width * input_image_height, sizeof(unsigned char));
 	// define output mat
 	// before alloc
-	int16_t *gradX_mat_data = calloc(input_image_width * input_image_height, sizeof(int16_t));
-	int16_t *gradY_mat_data = calloc(input_image_width * input_image_height, sizeof(int16_t));
-	// kernel
-	signed char kernelX[3][3];
-	signed char kernelY[3][3];
-	initKernelX(kernelX);
-	initKernelY(kernelY);
+	int16_t *grad_x_mat_data = calloc(input_image_width * input_image_height, sizeof(int16_t));
+	int16_t *grad_y_mat_data = calloc(input_image_width * input_image_height, sizeof(int16_t));
+	// sobel_kernel
+	signed char sobel_kernel_x[3][3] = {{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}};
+	signed char sobel_kernel_y[3][3] = {{-1,-2,-1}, {0,0,0}, {1,2,1}}
 	double end_allo = omp_get_wtime();
 	printf("\nAlloc: %lf sec\n", end_allo - start_allo);
 	// RGBA --> Gray
 	double start_rgba2gray = omp_get_wtime();
-	RGBA_to_greyScale(input_image_width, input_image_height, input_image_data, grey_input_image_data);
+	RGBA_to_grayscale(input_image_width, input_image_height, input_image_data, gray_input_image_data);
 	double end_rgba2gray = omp_get_wtime();
 	printf("rgba2gray: %lf sec\n", end_rgba2gray - start_rgba2gray);
 
 	// edge detection
 	double start_conv3 = omp_get_wtime();
-	conv3(input_image_width, input_image_height, grey_input_image_data, kernelX, gradX_mat_data);
-	conv3(input_image_width, input_image_height, grey_input_image_data, kernelY, gradY_mat_data);
+	conv3(input_image_width, input_image_height, gray_input_image_data, sobel_kernel_x, grad_x_mat_data);
+	conv3(input_image_width, input_image_height, gray_input_image_data, sobel_kernel_y, grad_y_mat_data);
 	double end_conv3 = omp_get_wtime();
-	post_processing(input_image_width, input_image_height, gradX_mat_data, gradY_mat_data, grey_output_image_data);
+	post_processing(input_image_width, input_image_height, grad_x_mat_data, grad_y_mat_data, gray_output_image_data);
 	printf("conv3: %lf sec\n", end_conv3 - start_conv3);
 	// Gray --> RGBA
 	double start_gray2rgba = omp_get_wtime();
-	greyScale_to_RGBA(input_image_width, input_image_height, grey_output_image_data, output_image_data);
+	grayscale_to_RGBA(input_image_width, input_image_height, gray_output_image_data, output_image_data);
 	double end_gray2rgba = omp_get_wtime();
 	printf("gray2rgba: %lf sec\n", end_gray2rgba - start_gray2rgba);
 	return 0;

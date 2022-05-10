@@ -107,10 +107,10 @@ __global__ void normalize_gpu(int* max, int* edge, struct pixel* output, const u
     uint32_t pxNum = y * width + x + basePx;
     int maxGrad = max[0];
 
-    int greyVal = int(float(edge[pxNum]) / maxGrad * 255);
-    output[pxNum].R = greyVal;
-    output[pxNum].G = greyVal;
-    output[pxNum].B = greyVal;
+    int grayVal = int(float(edge[pxNum]) / maxGrad * 255);
+    output[pxNum].R = grayVal;
+    output[pxNum].G = grayVal;
+    output[pxNum].B = grayVal;
     output[pxNum].A = 255;
 }
 
