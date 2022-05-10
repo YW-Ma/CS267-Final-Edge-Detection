@@ -52,13 +52,13 @@ make openmp
 
 for serial:
 ```
-./serial ../images/Gate_16.png output_16.png
+./serial ../images/Gate.png output_serial.png
 ```
 for openmp
 ```
 export OMP_PLACES=cores
 export OMP_PROC_BIND=spread
-srun -n 1 ./openmp ../images/Gate_16.png output_16.png
+srun -n 1 ./openmp ../images/Gate.png output_omp.png
 ```
 
 ## [2] CUDA

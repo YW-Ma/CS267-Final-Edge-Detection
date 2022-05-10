@@ -136,7 +136,7 @@ int post_processing(uint32_t image_width, uint32_t image_height, int16_t *gradX_
 		grey_output_image_data[i] = (unsigned char)((temp_mat[i] * 255) / max);
 	}
 	double end_post = omp_get_wtime();
-	printf("\n Post_Processing: %f sec, including serial find max: %f sec\n", end_post - start_post, end_serial - start_serial);
+	printf("Post_Processing: %f sec, including serial find max: %f sec\n", end_post - start_post, end_serial - start_serial);
 	return 0;
 }
 
@@ -192,7 +192,7 @@ int edge_detection(uint32_t input_image_width, uint32_t input_image_height, unsi
 	double start_rgba2gray = omp_get_wtime();
 	RGBA_to_greyScale(input_image_width, input_image_height, input_image_data, grey_input_image_data);
 	double end_rgba2gray = omp_get_wtime();
-	printf("\nrgba2gray: %lf sec\n", end_rgba2gray - start_rgba2gray);
+	printf("rgba2gray: %lf sec\n", end_rgba2gray - start_rgba2gray);
 
 	// edge detection
 	double start_conv3 = omp_get_wtime();
@@ -200,12 +200,12 @@ int edge_detection(uint32_t input_image_width, uint32_t input_image_height, unsi
 	conv3(input_image_width, input_image_height, grey_input_image_data, kernelY, gradY_mat_data);
 	double end_conv3 = omp_get_wtime();
 	post_processing(input_image_width, input_image_height, gradX_mat_data, gradY_mat_data, grey_output_image_data);
-	printf("\nconv3: %lf sec\n", end_conv3 - start_conv3);
+	printf("conv3: %lf sec\n", end_conv3 - start_conv3);
 	// Gray --> RGBA
 	double start_gray2rgba = omp_get_wtime();
 	greyScale_to_RGBA(input_image_width, input_image_height, grey_output_image_data, output_image_data);
 	double end_gray2rgba = omp_get_wtime();
-	printf("\ngray2rgba: %lf sec\n", end_gray2rgba - start_gray2rgba);
+	printf("gray2rgba: %lf sec\n", end_gray2rgba - start_gray2rgba);
 	return 0;
 }
 
