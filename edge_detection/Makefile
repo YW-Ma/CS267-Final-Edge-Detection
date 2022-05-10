@@ -14,7 +14,9 @@ cuda: cuda_main.cu lodepng.cpp
 	nvcc -o cuda $(FLAGS) $^
 
 clean:
-	rm -f $(EXES)
+	rm -f cuda
+	rm -f serial
+	rm -f openmp
 	rm -f *.o *~ core
 	rm -f output.png
 	rm -f ./lodepng/lodepng.o
