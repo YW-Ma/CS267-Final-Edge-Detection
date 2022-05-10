@@ -141,13 +141,13 @@ int main(int argc, char*argv[]) {
     // 3. Setup CUDA property, Grid = 20
     dim3 threadsPerBlock(20, 20, 1);
     dim3 numBlocks(ceil(width/20), ceil(height/20), 1);
-	print("threadsPerBlock = 400\n");
+	printf("threadsPerBlock = 400\n");
 
     auto start_time = std::chrono::system_clock::now();
 	// 4. RGBA --> Grayscale
 	rgba_to_grayscale<<<numBlocks, threadsPerBlock>>>(gpu_rgba, gpu_orig, width, height);
 	std::chrono::duration<double> rgba2gray = std::chrono::system_clock::now() - start_time;
-	print("Finish RGBA->Grayscale in: %fms\n", 1000 * rgba2gray.count());
+	printf("Finish RGBA->Grayscale in: %fms\n", 1000 * rgba2gray.count());
 	// 5. sobel edge detection.
     edge_detection<<<numBlocks, threadsPerBlock>>>(gpu_orig, gpu_sobel, width, height);
     cudaError_t cudaerror = cudaDeviceSynchronize(); // waits for completion, returns error code
